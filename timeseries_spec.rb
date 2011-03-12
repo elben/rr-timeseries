@@ -20,7 +20,10 @@ describe Timeseries do
     Timecop.return
   end
 
-  describe "getkey" do
+  describe "#get_last" do
+  end
+
+  describe "#getkey" do
     it "returns 'all_time' when timestep is infinity" do
       @ts = Timeseries.new(@redis, 'test', -1)
       @ts.getkey.should == 'tseries:test:all_time'
@@ -49,7 +52,33 @@ describe Timeseries do
     end
   end
 
-  describe "normalize_count" do
+  describe "#normalize_time" do
+    it "returns 'all_time' for infinite timestep" do
+      @ts = Timeseries.new(@redis, 'test', -1)
+      @ts.normalize_time(Time.now).should == 'all_time'
+    end
+
+    it "returns normalized time" do
+      t = Time.now
+      t_unix = t.to_i
+
+      Timecop.freeze(t)
+      @ts = Timeseries.new(@redis, 'test', 3)
+      @ts.normalize_time(Time.now).should == t_unix - t_unix % 3
+
+      # 12345 seconds later
+      Timecop.travel(t + 12345)
+      t_unix += 12345
+      @ts.normalize_time(Time.now).should == t_unix - t_unix % 3
+
+      # Another 1000 seconds later
+      Timecop.travel(Time.now + 1000) # 1234 + 1000
+      t_unix += 1000
+      @ts.normalize_time(Time.now).should == t_unix - t_unix % 3
+    end
+  end
+
+  describe "#normalize_count" do
     it "returns 0 if count is nil" do
       @ts = Timeseries.new(@redis, 'test', 5)
       @ts.normalize_count(nil).should == 0
