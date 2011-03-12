@@ -44,14 +44,11 @@ class Timeseries
 
   def getkey(time=nil)
     time ||= Time.now
-    if @timestep == -1
-      "tseries:#{@label}:all_time"
-    else
-      "tseries:#{@label}:#{normalize_time time}"
-    end
+    "tseries:#{@label}:#{normalize_time time}"
   end
 
   def normalize_time(time)
+    return 'all_time' if @timestep == -1
     t = time.to_i
     t - (t % @timestep)
   end
