@@ -90,20 +90,3 @@ describe Timeseries do
     end
   end
 end
-
-#class TimeseriesTest < Test::Unit::TestCase
-  #def setup
-    #redis = Redis.new(:host => 'localhost',
-                       #:port => 6379,
-                       #:db => 9,
-                       #:timeout => 30)
-    #@ts = Timeseries.new(redis, 'test', 5)
-  #end
-
-  #def teardown
-  #end
-
-  #def test_1
-  #end
-#end
-
