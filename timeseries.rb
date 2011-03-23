@@ -4,11 +4,13 @@ class Timeseries
   #   label - redis keys will be of the format "tseries:#{label}:..."
   #   timestep - number of seconds in a series. Pass in -1 for an infinite time
   #              step.
-  def initialize(redis, label, timestep=60)
+  #   history_size - the number of timesteps to keep around. Pass in -1 to keep
+  #                  all history. Defaults to -1.
+  def initialize(redis, label, timestep=60, history_size=-1)
     @redis = redis
     @label = label
     @timestep = [-1, timestep].max
-
+    @history_size = history_size
   end
 
   def incr(field)
@@ -48,13 +50,30 @@ class Timeseries
   end
 
   def normalize_time(time)
-    return 'all_time' if @timestep == -1
+    return 'all_time' if infinite?(@timestep)
     t = time.to_i
     t - (t % @timestep)
   end
   
   def normalize_count(count)
       count.to_i # if nil, we get 0
+  end
+
+  # Given a time, remove the timestep that is one timestep out of the history
+  # range. Returns the key trimmed.
+  def trim(time=nil)
+    time ||= Time.now
+    return if infinite?(@history_size)
+    prev_time = normalize_time(time) - @timestep * @history_size
+    key = getkey(prev_time)
+    @redis.del(key)
+    key
+  end
+
+  private
+
+  def infinite?(n)
+    n == -1 || n == :infinite
   end
 end
 
