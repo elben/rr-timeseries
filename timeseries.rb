@@ -6,7 +6,8 @@ class Timeseries
   #              step.
   #   history_size - the number of timesteps to keep around. Pass in -1 to keep
   #                  all history. Defaults to -1.
-  def initialize(redis, label, timestep=60, history_size=-1)
+  #   auto_trim - when 
+  def initialize(redis, label, timestep=60, history_size=-1, auto_trim=true)
     @redis = redis
     @label = label
     @timestep = [-1, timestep].max
@@ -32,7 +33,7 @@ class Timeseries
   def get_last(field, last=1)
     t = Time.now
 
-    if @timestep == -1
+    if infinite?(@timestep)
       return [normalize_count(@redis.hget(getkey(t), field))]
     end
 
@@ -59,15 +60,27 @@ class Timeseries
       count.to_i # if nil, we get 0
   end
 
-  # Given a time, remove the timestep that is one timestep out of the history
-  # range. Returns the key trimmed.
+  # Given a time, remove the timesteps that are out of the history range.
+  # Returns the latest key trimmed.
+  #
+  # If timesteps are skipped (e.g. if nothing happens, no keys are created),
+  # then trim may not trim all old keys. This is a design problem that needs to
+  # be fixed.
   def trim(time=nil)
     time ||= Time.now
     return if infinite?(@history_size)
     prev_time = normalize_time(time) - @timestep * @history_size
-    key = getkey(prev_time)
-    @redis.del(key)
-    key
+    first_key = getkey(prev_time)
+
+    # Deletes older keys as long as they exist.
+    loop do
+      key = getkey(prev_time)
+      break unless @redis.exists(key)
+      @redis.del(key)
+      prev_time -= @timestep
+    end
+
+    first_key
   end
 
   private
