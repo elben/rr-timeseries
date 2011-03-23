@@ -20,6 +20,26 @@ describe Timeseries do
     Timecop.return
   end
 
+  describe "#trim" do
+    it "doesn't trim if infinite" do
+      @ts = Timeseries.new(@redis, 'test')
+      @ts.trim.should be_nil
+    end
+
+    it "trims correct key" do
+      @ts = Timeseries.new(@redis, 'test', 1, 5)
+      t = Time.now
+
+      @ts.trim.should == @ts.getkey(Time.now - 5)
+
+      Timecop.travel(t + 5)
+      @ts.trim.should == @ts.getkey(Time.now - 5)
+
+      Timecop.travel(t + 5 + 3)
+      @ts.trim.should == @ts.getkey(Time.now - 5)
+    end
+  end
+
   describe "#get_last" do
   end
 
