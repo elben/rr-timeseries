@@ -26,7 +26,7 @@ describe Timeseries do
       @ts.trim.should be_nil
     end
 
-    it "trims correct key" do
+    it "returns correct latest key" do
       @ts = Timeseries.new(@redis, 'test', 1, 5)
       t = Time.now
 
