@@ -28,8 +28,11 @@ ruby timeseries library. The redis key is calculated like this:
 And the value is a hash, where the keys of the hash are the labels you pass in
 to ts.incr, and the values are counts.
 
-Notes
+TODO
 ===================
 
 Round-robining is on the roadmap but is not implemented. Triming does not work
 properly.
+
+Should be able to get the counts from a certain range of time. That is, get()
+should take a start_time and end_time.
